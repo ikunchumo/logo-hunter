@@ -1,0 +1,938 @@
+{
+  "args": {
+    "ratio": 0.72,
+    "min_inliers": 12,
+    "min_inlier_ratio": 0.26,
+    "scales": "1.0,1.7,2.6",
+    "max_side": 1280,
+    "iou": 0.25
+  },
+  "recall": 1.0,
+  "precision": 1.0,
+  "f1": 1.0,
+  "tp": 40,
+  "fp": 0,
+  "miss": 0,
+  "avg_ms": 300.0211399999379,
+  "stats": {
+    "pos": [
+      {
+        "file": "pos/pos_000.jpg",
+        "found": true,
+        "score": 33.611111111111114,
+        "inliers": 55,
+        "matches": 90,
+        "ms": 68.85639999927662,
+        "box": [
+          320,
+          3,
+          96,
+          123
+        ],
+        "iou": 0.8743224932249323,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_001.jpg",
+        "found": true,
+        "score": 276.3900293255132,
+        "inliers": 307,
+        "matches": 341,
+        "ms": 61.7989000002126,
+        "box": [
+          292,
+          137,
+          184,
+          236
+        ],
+        "iou": 0.8460759027266028,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_002.jpg",
+        "found": true,
+        "score": 162.86160714285714,
+        "inliers": 191,
+        "matches": 224,
+        "ms": 68.5674000014842,
+        "box": [
+          51,
+          -2,
+          312,
+          392
+        ],
+        "iou": 0.8205618785975929,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_003.jpg",
+        "found": true,
+        "score": 327.5401069518716,
+        "inliers": 350,
+        "matches": 374,
+        "ms": 69.40629999917292,
+        "box": [
+          15,
+          31,
+          315,
+          378
+        ],
+        "iou": 0.6565633660871756,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_004.jpg",
+        "found": true,
+        "score": 25.941176470588236,
+        "inliers": 42,
+        "matches": 68,
+        "ms": 60.77660000119067,
+        "box": [
+          436,
+          74,
+          302,
+          345
+        ],
+        "iou": 0.6437086092715232,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_005.jpg",
+        "found": true,
+        "score": 309.15584415584414,
+        "inliers": 345,
+        "matches": 385,
+        "ms": 72.44689999970433,
+        "box": [
+          -32,
+          129,
+          463,
+          472
+        ],
+        "iou": 0.6563907090822565,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_006.jpg",
+        "found": true,
+        "score": 213.39463601532566,
+        "inliers": 236,
+        "matches": 261,
+        "ms": 61.69720000070811,
+        "box": [
+          30,
+          168,
+          202,
+          305
+        ],
+        "iou": 0.7900503165070606,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_007.jpg",
+        "found": true,
+        "score": 930.8512145748988,
+        "inliers": 959,
+        "matches": 988,
+        "ms": 79.81660000041302,
+        "box": [
+          137,
+          30,
+          520,
+          564
+        ],
+        "iou": 0.6425531914893617,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_008.jpg",
+        "found": true,
+        "score": 60.70322580645162,
+        "inliers": 97,
+        "matches": 155,
+        "ms": 55.697699999655015,
+        "box": [
+          131,
+          57,
+          163,
+          178
+        ],
+        "iou": 0.6501688839870408,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_009.jpg",
+        "found": true,
+        "score": 101.44025157232704,
+        "inliers": 127,
+        "matches": 159,
+        "ms": 70.15249999858497,
+        "box": [
+          199,
+          8,
+          377,
+          445
+        ],
+        "iou": 0.7257592465651358,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_010.jpg",
+        "found": true,
+        "score": 464.30286738351253,
+        "inliers": 509,
+        "matches": 558,
+        "ms": 78.80909999948926,
+        "box": [
+          240,
+          -17,
+          565,
+          610
+        ],
+        "iou": 0.6412012186275932,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_011.jpg",
+        "found": true,
+        "score": 426.32871287128717,
+        "inliers": 464,
+        "matches": 505,
+        "ms": 74.80209999994258,
+        "box": [
+          253,
+          20,
+          451,
+          519
+        ],
+        "iou": 0.6980505748304987,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_012.jpg",
+        "found": true,
+        "score": 361.65296803652967,
+        "inliers": 398,
+        "matches": 438,
+        "ms": 67.53910000043106,
+        "box": [
+          51,
+          16,
+          280,
+          318
+        ],
+        "iou": 0.6827717879604672,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_013.jpg",
+        "found": true,
+        "score": 109.58490566037736,
+        "inliers": 132,
+        "matches": 159,
+        "ms": 58.50079999981972,
+        "box": [
+          223,
+          0,
+          243,
+          364
+        ],
+        "iou": 0.8319766653099987,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_014.jpg",
+        "found": true,
+        "score": 16.333333333333336,
+        "inliers": 28,
+        "matches": 48,
+        "ms": 60.99689999973634,
+        "box": [
+          391,
+          162,
+          204,
+          220
+        ],
+        "iou": 0.6425133689839572,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_015.jpg",
+        "found": true,
+        "score": 253.44307692307692,
+        "inliers": 287,
+        "matches": 325,
+        "ms": 71.666699999696,
+        "box": [
+          292,
+          45,
+          358,
+          461
+        ],
+        "iou": 0.865170445594348,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_016.jpg",
+        "found": true,
+        "score": 370.25959367945825,
+        "inliers": 405,
+        "matches": 443,
+        "ms": 66.18150000031164,
+        "box": [
+          448,
+          -11,
+          315,
+          362
+        ],
+        "iou": 0.6753485924756643,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_017.jpg",
+        "found": true,
+        "score": 382.54459203036055,
+        "inliers": 449,
+        "matches": 527,
+        "ms": 66.8638999995892,
+        "box": [
+          11,
+          205,
+          319,
+          359
+        ],
+        "iou": 0.6732389692720112,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_018.jpg",
+        "found": true,
+        "score": 114.91907514450867,
+        "inliers": 141,
+        "matches": 173,
+        "ms": 62.157399999705376,
+        "box": [
+          217,
+          229,
+          269,
+          330
+        ],
+        "iou": 0.7754646840148699,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_019.jpg",
+        "found": true,
+        "score": 891.8110882956879,
+        "inliers": 932,
+        "matches": 974,
+        "ms": 76.0640999997122,
+        "box": [
+          142,
+          102,
+          405,
+          452
+        ],
+        "iou": 0.8102589314978695,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_020.jpg",
+        "found": true,
+        "score": 977.1711281070745,
+        "inliers": 1011,
+        "matches": 1046,
+        "ms": 78.92100000026403,
+        "box": [
+          -24,
+          51,
+          475,
+          496
+        ],
+        "iou": 0.7744269949066214,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_021.jpg",
+        "found": true,
+        "score": 89.88799999999999,
+        "inliers": 106,
+        "matches": 125,
+        "ms": 57.091200000286335,
+        "box": [
+          593,
+          171,
+          156,
+          191
+        ],
+        "iou": 0.7928916633105115,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_022.jpg",
+        "found": true,
+        "score": 239.22149837133549,
+        "inliers": 271,
+        "matches": 307,
+        "ms": 68.52679999974498,
+        "box": [
+          300,
+          9,
+          525,
+          588
+        ],
+        "iou": 0.6761904761904762,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_023.jpg",
+        "found": true,
+        "score": 372.74097664543524,
+        "inliers": 419,
+        "matches": 471,
+        "ms": 70.88289999956032,
+        "box": [
+          344,
+          104,
+          283,
+          340
+        ],
+        "iou": 0.7445229681978799,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_024.jpg",
+        "found": true,
+        "score": 155.2654028436019,
+        "inliers": 181,
+        "matches": 211,
+        "ms": 64.25260000105482,
+        "box": [
+          188,
+          98,
+          226,
+          261
+        ],
+        "iou": 0.6837215610483843,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_025.jpg",
+        "found": true,
+        "score": 71.53465346534654,
+        "inliers": 85,
+        "matches": 101,
+        "ms": 55.803700000979006,
+        "box": [
+          213,
+          186,
+          100,
+          125
+        ],
+        "iou": 0.8352,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_026.jpg",
+        "found": true,
+        "score": 73.7872340425532,
+        "inliers": 102,
+        "matches": 141,
+        "ms": 69.1330999998172,
+        "box": [
+          144,
+          180,
+          234,
+          251
+        ],
+        "iou": 0.6460312595770763,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_027.jpg",
+        "found": true,
+        "score": 67.24,
+        "inliers": 82,
+        "matches": 100,
+        "ms": 63.17029999991064,
+        "box": [
+          197,
+          -9,
+          352,
+          408
+        ],
+        "iou": 0.6778074866310161,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_028.jpg",
+        "found": true,
+        "score": 29.224719101123593,
+        "inliers": 51,
+        "matches": 89,
+        "ms": 58.641800000259536,
+        "box": [
+          134,
+          186,
+          211,
+          278
+        ],
+        "iou": 0.8276108970643391,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_029.jpg",
+        "found": true,
+        "score": 74.18881118881119,
+        "inliers": 103,
+        "matches": 143,
+        "ms": 57.47659999906318,
+        "box": [
+          330,
+          7,
+          213,
+          237
+        ],
+        "iou": 0.6673203779639865,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_030.jpg",
+        "found": true,
+        "score": 170.45217391304348,
+        "inliers": 198,
+        "matches": 230,
+        "ms": 64.70079999962763,
+        "box": [
+          24,
+          42,
+          358,
+          443
+        ],
+        "iou": 0.7928168783182213,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_031.jpg",
+        "found": true,
+        "score": 96.98507462686567,
+        "inliers": 114,
+        "matches": 134,
+        "ms": 61.89720000111265,
+        "box": [
+          430,
+          166,
+          261,
+          314
+        ],
+        "iou": 0.7550577153037069,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_032.jpg",
+        "found": true,
+        "score": 1220.4812547819433,
+        "inliers": 1263,
+        "matches": 1307,
+        "ms": 79.42350000121223,
+        "box": [
+          67,
+          11,
+          549,
+          605
+        ],
+        "iou": 0.6512667660208644,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_033.jpg",
+        "found": true,
+        "score": 697.3884711779449,
+        "inliers": 746,
+        "matches": 798,
+        "ms": 84.3709000000672,
+        "box": [
+          46,
+          120,
+          332,
+          391
+        ],
+        "iou": 0.7197639663513389,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_034.jpg",
+        "found": true,
+        "score": 248.72360248447205,
+        "inliers": 283,
+        "matches": 322,
+        "ms": 69.02549999904295,
+        "box": [
+          362,
+          3,
+          408,
+          514
+        ],
+        "iou": 0.8171206225680934,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_035.jpg",
+        "found": true,
+        "score": 8.711111111111112,
+        "inliers": 28,
+        "matches": 90,
+        "ms": 208.24440000069444,
+        "box": [
+          569,
+          250,
+          222,
+          234
+        ],
+        "iou": 0.6403326403326404,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_036.jpg",
+        "found": true,
+        "score": 161.80851063829786,
+        "inliers": 195,
+        "matches": 235,
+        "ms": 66.1192999996274,
+        "box": [
+          -4,
+          7,
+          253,
+          257
+        ],
+        "iou": 0.65263530244075,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_037.jpg",
+        "found": true,
+        "score": 170.45217391304348,
+        "inliers": 198,
+        "matches": 230,
+        "ms": 60.703799999828334,
+        "box": [
+          257,
+          33,
+          272,
+          312
+        ],
+        "iou": 0.7021116138763197,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_038.jpg",
+        "found": true,
+        "score": 215.04895104895104,
+        "inliers": 248,
+        "matches": 286,
+        "ms": 71.25520000045071,
+        "box": [
+          -21,
+          -7,
+          244,
+          286
+        ],
+        "iou": 0.7200791012266422,
+        "hit_ok": true
+      },
+      {
+        "file": "pos/pos_039.jpg",
+        "found": true,
+        "score": 988.0957345971564,
+        "inliers": 1021,
+        "matches": 1055,
+        "ms": 81.57380000011472,
+        "box": [
+          173,
+          -6,
+          517,
+          583
+        ],
+        "iou": 0.6746601816124826,
+        "hit_ok": true
+      }
+    ],
+    "neg": [
+      {
+        "file": "neg/neg_000.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 561.6941999996925,
+        "box": null
+      },
+      {
+        "file": "neg/neg_001.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 442.8498999986914,
+        "box": null
+      },
+      {
+        "file": "neg/neg_002.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 855.5162000011478,
+        "box": null
+      },
+      {
+        "file": "neg/neg_003.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 669.7402000008879,
+        "box": null
+      },
+      {
+        "file": "neg/neg_004.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 465.10900000066613,
+        "box": null
+      },
+      {
+        "file": "neg/neg_005.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 608.686999999918,
+        "box": null
+      },
+      {
+        "file": "neg/neg_006.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 852.8994000007515,
+        "box": null
+      },
+      {
+        "file": "neg/neg_007.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 519.735200001378,
+        "box": null
+      },
+      {
+        "file": "neg/neg_008.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 915.9841000000597,
+        "box": null
+      },
+      {
+        "file": "neg/neg_009.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 423.1383000005735,
+        "box": null
+      },
+      {
+        "file": "neg/neg_010.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 604.0746999988187,
+        "box": null
+      },
+      {
+        "file": "neg/neg_011.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 620.9486999996443,
+        "box": null
+      },
+      {
+        "file": "neg/neg_012.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 372.59499999890977,
+        "box": null
+      },
+      {
+        "file": "neg/neg_013.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 660.3409999988799,
+        "box": null
+      },
+      {
+        "file": "neg/neg_014.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 765.5102999997325,
+        "box": null
+      },
+      {
+        "file": "neg/neg_015.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 743.0641999999352,
+        "box": null
+      },
+      {
+        "file": "neg/neg_016.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 739.1380999997637,
+        "box": null
+      },
+      {
+        "file": "neg/neg_017.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 513.2773999994242,
+        "box": null
+      },
+      {
+        "file": "neg/neg_018.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 480.75690000041504,
+        "box": null
+      },
+      {
+        "file": "neg/neg_019.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 345.553099999961,
+        "box": null
+      },
+      {
+        "file": "neg/neg_020.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 464.3711999997322,
+        "box": null
+      },
+      {
+        "file": "neg/neg_021.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 747.025599999688,
+        "box": null
+      },
+      {
+        "file": "neg/neg_022.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 618.1571999986772,
+        "box": null
+      },
+      {
+        "file": "neg/neg_023.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 519.0967999988061,
+        "box": null
+      },
+      {
+        "file": "neg/neg_024.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 531.638299999031,
+        "box": null
+      },
+      {
+        "file": "neg/neg_025.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 673.1663000009576,
+        "box": null
+      },
+      {
+        "file": "neg/neg_026.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 615.8232999987376,
+        "box": null
+      },
+      {
+        "file": "neg/neg_027.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 503.8053999996919,
+        "box": null
+      },
+      {
+        "file": "neg/neg_028.jpg",
+        "found": false,
+        "score": 3.8461538461538463,
+        "inliers": 10,
+        "matches": 26,
+        "ms": 782.3533999999199,
+        "box": [
+          329,
+          185,
+          29,
+          22
+        ]
+      },
+      {
+        "file": "neg/neg_029.jpg",
+        "found": false,
+        "score": 0.0,
+        "inliers": 0,
+        "matches": 0,
+        "ms": 541.4168999996036,
+        "box": null
+      }
+    ]
+  }
+}

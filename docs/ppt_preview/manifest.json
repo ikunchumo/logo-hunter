@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "backend": "native",
+  "rasterEngine": "pdfium",
+  "source": "saved",
+  "inputPath": "D:\\project\\logo-hunter\\docs\\汇报预览.pdf",
+  "sourceSha256": "a9c3549f4915b39e3553faf4f4b4dd68e38066a2041edf8e79c4f3eff0db1a08",
+  "dpi": 110,
+  "pageCount": 16,
+  "images": [
+    {
+      "index": 1,
+      "page": 4,
+      "path": "D:\\project\\logo-hunter\\docs\\ppt_preview\\page-0001.png",
+      "width": 1467,
+      "height": 825,
+      "rectangle": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "byteLength": 137314
+    },
+    {
+      "index": 2,
+      "page": 7,
+      "path": "D:\\project\\logo-hunter\\docs\\ppt_preview\\page-0002.png",
+      "width": 1467,
+      "height": 825,
+      "rectangle": {
+        "x": 0,
+        "y": 0,
+        "width": 1280,
+        "height": 720
+      },
+      "byteLength": 466706
+    }
+  ],
+  "missingFonts": []
+}
