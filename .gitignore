@@ -19,6 +19,7 @@ data/sweep.json
 
 # ===== Large files (regenerable by scripts) =====
 data/train_pool.npz
+data/_*.npz
 data/samples/raw/
 data/testset/pos/
 data/testset/neg/
