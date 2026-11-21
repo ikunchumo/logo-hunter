@@ -159,6 +159,10 @@ PAGE = r"""<!doctype html>
   .tplname{font-size:13.5px;font-weight:600}
   .tplsub{font-size:12px;color:var(--sub);margin-top:3px}
   .tplsub.warn{color:var(--orange)}
+  .poolcard{grid-column:1 / -1;display:flex;align-items:center;gap:16px;
+            padding:16px 20px}
+  .poolcard img{width:52px;height:52px;object-fit:contain;border-radius:10px;
+            background:#fafafa;border:.5px solid var(--line);padding:3px}
   .tile .prob{height:4px;background:#ededf0;margin:0 11px;border-radius:4px;overflow:hidden}
   .tile .prob > div{height:100%;border-radius:4px}
   .tile .ptxt{padding:5px 11px 9px;font-size:10.5px;color:var(--sub);
@@ -315,6 +319,20 @@ PAGE = r"""<!doctype html>
       <div class="log" id="log">准备就绪。参数改完点「开始训练」。</div>
     </div>
 
+    <!-- 训练目标：可独立于扫描页的模板 -->
+    <div class="card poolcard" id="pool-card">
+      <img id="pool-tpl" src="/api/pool/template/image" alt="target">
+      <div class="tplmeta">
+        <div class="tplname">训练目标</div>
+        <div class="tplsub" id="pool-meta">默认跟随扫描页模板 · 训练池 2400 张</div>
+      </div>
+      <div class="row" style="flex:0 0 auto;gap:8px">
+        <button class="btn ghost" id="pool-upload">更换训练目标</button>
+        <button class="btn primary" id="pool-rebuild">重建训练数据</button>
+      </div>
+      <input type="file" id="pool-file" accept="image/*" hidden>
+    </div>
+
     <!-- CNN 搜索演示：训练完之后，用这个模型扫一遍图库，和 SIFT 对照 -->
     <div class="card" id="cnn-card" style="grid-column:1 / -1">
       <div class="chart-head">
@@ -408,10 +426,80 @@ async function refreshTemplate(){
       `${t.width}×${t.height} · ${t.keypoints} 个特征点 · ` +
       (t.source === 'custom' ? '自定义' : '默认模板');
     $('tpl-meta').classList.remove('warn');
-    $('tpl-img').src = '/api/template/image?t=' + Date.now();
+    const url = '/api/template/image?t=' + Date.now();
+    $('tpl-img').src = url;
+    const pt = $('pool-tpl');
+    if (pt){ pt.src = url; }
   }catch(e){ $('tpl-meta').textContent = '模板信息读取失败'; }
 }
 refreshTemplate();
+
+/* 训练目标 = 独立于扫描页模板的一张图；换完要重建数据 */
+async function refreshTrainTpl(){
+  try{
+    const t = await (await fetch('/api/template')).json();
+    const img = $('pool-tpl');
+    if (img) img.src = '/api/pool/template/image?t=' + Date.now();
+    const meta = $('pool-meta');
+    if (meta && !meta.dataset.busy){
+      meta.textContent = (t.source === 'custom'
+        ? '当前扫描模板为自定义图'
+        : '默认跟随扫描页模板') + ' · 训练池 2400 张';
+    }
+  }catch(e){}
+}
+
+$('pool-upload').onclick = () => $('pool-file').click();
+$('pool-file').onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = async ev => {
+    const meta = $('pool-meta');
+    meta.textContent = '正在保存训练目标…'; meta.classList.remove('warn');
+    try{
+      const r = await (await fetch('/api/pool/template',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({image: ev.target.result})})).json();
+      if(r.error){ meta.textContent = r.error; meta.classList.add('warn'); return; }
+      $('pool-tpl').src = '/api/pool/template/image?t=' + Date.now();
+      meta.textContent = `训练目标已更新（${r.width}×${r.height}）· 点「重建训练数据」生效`;
+      meta.dataset.busy = '1';
+      setTimeout(()=>{ delete meta.dataset.busy; }, 8000);
+    }catch(err){ meta.textContent = '上传失败：' + err.message; }
+  };
+  rd.readAsDataURL(f);
+  e.target.value = '';
+};
+refreshTrainTpl();
+
+/* 重建训练池 */
+$('pool-rebuild').onclick = async () => {
+  const btn = $('pool-rebuild'), meta = $('pool-meta');
+  btn.disabled = true; btn.textContent = '生成中…';
+  meta.textContent = '正在用训练目标合成正负样本…';
+  meta.dataset.busy = '1';
+  try{
+    const r = await (await fetch('/api/pool/rebuild',{method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({per_class: 600})})).json();
+    if(r.error){ meta.textContent = r.error; meta.classList.add('warn'); return; }
+    const name = (r.template || '').split(/[\\/]/).pop();
+    meta.classList.remove('warn');
+    meta.textContent = `训练池 ${r.n} 张（${r.n/2} 正 + ${r.n/2} 负）· ${r.seconds}s · 模板 ${name}`;
+    $('log').innerHTML = `<div>[${new Date().toLocaleTimeString()}] 训练池已重建，`
+      + `点「开始训练」用这个目标训练</div>`;
+    $('result').classList.add('hidden');
+    $('bar').style.width = '0%';
+    $('progress-text').textContent = '等待开始';
+    state = {loss:[], val_acc:[]}; drawChart();
+  }catch(e){
+    meta.textContent = '重建失败：' + e.message;
+    meta.classList.add('warn');
+  }
+  btn.disabled = false; btn.textContent = '重建训练数据';
+  setTimeout(()=>{ delete meta.dataset.busy; }, 3000);
+};
 
 $('tpl-upload').onclick = () => $('tpl-file').click();
 $('tpl-file').onchange = e => {
@@ -746,6 +834,10 @@ class Handler(BaseHTTPRequestHandler):
             p = Path(template_info()["path"])
             data = p.read_bytes() if p.exists() else b""
             self._send(200, data, "image/png")
+        elif u.path == "/api/pool/template/image":
+            p = Path(trainer.train_template_info()["path"])
+            data = p.read_bytes() if p.exists() else b""
+            self._send(200, data, "image/png")
         elif u.path == "/api/thumb":
             self._thumb(parse_qs(u.query))
         else:
@@ -858,6 +950,34 @@ class Handler(BaseHTTPRequestHandler):
                     warn = (f"模板只有 {info['keypoints']} 个特征点，偏少，"
                             "目标细节越多（文字、花纹）效果越好")
                 self._json({"ok": True, "warning": warn, **info})
+            elif path == "/api/pool/rebuild":
+                req = json.loads(body or b"{}")
+                info = trainer.rebuild_pool(n_per_class=int(req.get("per_class", 600)))
+                self._json({"ok": True, **info})
+            elif path == "/api/pool/template":
+                req = json.loads(body or b"{}")
+                raw = req.get("image", "")
+                if not raw:
+                    self._json({"error": "没有收到图片"}, 400)
+                    return
+                b64 = raw.split(",", 1)[1] if "," in raw else raw
+                img = cv2.imdecode(np.frombuffer(base64.b64decode(b64), np.uint8),
+                                   cv2.IMREAD_UNCHANGED)
+                if img is None:
+                    self._json({"error": "图片解码失败"}, 400)
+                    return
+                if img.ndim == 3 and img.shape[2] == 4:
+                    a = img[:, :, 3:4].astype(np.float32) / 255.0
+                    bgr = img[:, :, :3].astype(np.float32)
+                    img = (bgr * a + 255.0 * (1 - a)).astype(np.uint8)
+                elif img.ndim == 2:
+                    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+                info = trainer.set_train_template(img)
+                # 换了目标，旧模型和旧池都失效
+                self._json({"ok": True, **info,
+                            "note": "训练目标已更新，请点「重建训练数据」"})
+            elif path == "/api/pool/template/reset":
+                self._json(trainer.clear_train_template())
             elif path == "/api/template/reset":
                 if CUSTOM_TPL.exists():
                     CUSTOM_TPL.unlink()

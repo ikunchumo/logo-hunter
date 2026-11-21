@@ -114,35 +114,62 @@ def make_negative(bg: np.ndarray, badge_clr: np.ndarray,
     return cv2.resize(crop, (SIZE, SIZE), interpolation=cv2.INTER_AREA)
 
 
-def main(n_per_class: int = 1200, seed: int = 21) -> None:
+def to_bgra(img: np.ndarray) -> np.ndarray:
+    """把任意图转成带 alpha 的版本：白底变透明。
+
+    用「到白色的距离」当不透明度，比单纯取灰度更通用 ——
+    彩色 logo（白底红字）也能得到正确的前景遮罩。
+    """
+    if img.ndim == 2:
+        img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+    if img.shape[2] == 4:
+        return img
+    dist = np.linalg.norm(img.astype(np.float32) - 255.0, axis=2)
+    alpha = np.clip(dist / 110.0 * 255.0, 0, 255).astype(np.uint8)
+    return np.dstack([img, alpha])
+
+
+def build_pool(template_path: Path | None = None,
+               out_path: Path = POOL, n_per_class: int = 1200,
+               seed: int = 21, verbose: bool = True) -> dict:
+    """用指定模板合成二分类训练池。返回统计信息。"""
+    tpl_path = Path(template_path) if template_path else BADGE_CLR
+    raw = cv2.imread(str(tpl_path), cv2.IMREAD_UNCHANGED)
+    if raw is None:
+        raise FileNotFoundError(f"读不到模板：{tpl_path}")
+    badge = to_bgra(raw)
+    badge_clr = badge[:, :, :3].copy()
+
     rng = np.random.default_rng(seed)
     bgs = load_backgrounds()
-    badge = cv2.imread(str(BADGE), cv2.IMREAD_UNCHANGED)
-    badge_clr = cv2.imread(str(BADGE_CLR), cv2.IMREAD_COLOR)
-    if badge is None or badge_clr is None:
-        raise SystemExit("缺少 assets/template*.png")
 
     xs, ys = [], []
     for i in range(n_per_class):
-        bg = bgs[i % len(bgs)]
-        img = make_positive(bg, badge, rng)
-        xs.append(img)
+        xs.append(make_positive(bgs[i % len(bgs)], badge, rng))
         ys.append(1)
-        if i % 200 == 0:
+        if verbose and i % 300 == 0:
             print(f"  正样本 {i}/{n_per_class}", flush=True)
     for i in range(n_per_class):
-        bg = bgs[(i * 7 + 3) % len(bgs)]
-        img = make_negative(bg, badge_clr, rng)
-        xs.append(img)
+        xs.append(make_negative(bgs[(i * 7 + 3) % len(bgs)], badge_clr, rng))
         ys.append(0)
-        if i % 200 == 0:
+        if verbose and i % 300 == 0:
             print(f"  负样本 {i}/{n_per_class}", flush=True)
 
     x = np.stack(xs).astype(np.uint8)
     y = np.array(ys, dtype=np.int64)
     idx = rng.permutation(len(x))
-    np.savez_compressed(POOL, x=x[idx], y=y[idx])
-    print(f"训练池 {x.shape} -> {POOL}  ({POOL.stat().st_size/1e6:.1f} MB)")
+    out_path.parent.mkdir(parents=True, exist_ok=True)
+    np.savez_compressed(out_path, x=x[idx], y=y[idx])
+    info = {"n": int(len(x)), "n_pos": int(y.sum()), "size": SIZE,
+            "template": str(tpl_path), "path": str(out_path),
+            "mb": round(out_path.stat().st_size / 1e6, 1)}
+    if verbose:
+        print(f"训练池 {x.shape} -> {out_path}  ({info['mb']} MB)")
+    return info
+
+
+def main(n_per_class: int = 1200, seed: int = 21) -> None:
+    build_pool(BADGE_CLR, POOL, n_per_class=n_per_class, seed=seed)
 
 
 if __name__ == "__main__":

@@ -22,6 +22,9 @@ import torch.nn.functional as F
 ROOT = Path(__file__).resolve().parents[1]
 POOL = ROOT / "data" / "train_pool.npz"
 MODEL = ROOT / "models" / "badge_cnn.pt"
+# 训练目标可以和扫描页的 SIFT 模板不同：CNN 只需要"图里长什么样"，
+# 不需要 SIFT 那样的强纹理，所以这里单独存一份。
+TRAIN_TPL = ROOT / "assets" / "train_template.png"
 
 STATE: dict = {
     "running": False, "done": False, "error": None,
@@ -290,6 +293,68 @@ def stop() -> dict:
         STATE["running"] = False
     _log("已请求停止")
     return {"ok": True}
+
+
+def rebuild_pool(template_path: str | Path | None = None,
+                 n_per_class: int = 600) -> dict:
+    """用指定模板重建二分类训练池（正样本贴该模板，负样本随机块）。
+
+    默认用「训练目标」图（TRAIN_TPL）；没有的话回退到扫描页的 SIFT 模板。
+    """
+    from build_train_pool import build_pool, POOL
+
+    if template_path:
+        tpl = Path(template_path)
+    elif TRAIN_TPL.exists():
+        tpl = TRAIN_TPL
+    else:
+        tpl = ROOT / "assets" / "template.png"
+    if not tpl.exists():
+        raise FileNotFoundError(f"找不到模板：{tpl}")
+
+    t0 = time.time()
+    info = build_pool(tpl, POOL, n_per_class=n_per_class, verbose=False)
+    info["seconds"] = round(time.time() - t0, 1)
+    info["source"] = "custom" if tpl == TRAIN_TPL else "default"
+    with _LOCK:
+        STATE["done"] = False
+        STATE["result"] = None
+        STATE["loss"] = []
+        STATE["val_acc"] = []
+        STATE["train_acc"] = []
+        STATE["val_loss"] = []
+        STATE["epoch"] = 0
+        STATE["log"] = []
+    _log(f"训练池已重建：{info['n']} 张（{n_per_class}/类），模板 {tpl.name}")
+    return info
+
+
+def set_train_template(img_bgr) -> dict:
+    """把上传的图设为训练目标（不影响 SIFT 检测模板）。"""
+    import cv2
+
+    h, w = img_bgr.shape[:2]
+    if max(h, w) > 800:
+        s = 800 / max(h, w)
+        img_bgr = cv2.resize(img_bgr, None, fx=s, fy=s,
+                             interpolation=cv2.INTER_AREA)
+    TRAIN_TPL.parent.mkdir(parents=True, exist_ok=True)
+    cv2.imwrite(str(TRAIN_TPL), img_bgr)
+    return {"path": str(TRAIN_TPL), "width": img_bgr.shape[1],
+            "height": img_bgr.shape[0], "source": "custom"}
+
+
+def clear_train_template() -> dict:
+    if TRAIN_TPL.exists():
+        TRAIN_TPL.unlink()
+    return {"ok": True, "source": "default"} 
+
+
+def train_template_info() -> dict:
+    """返回训练目标的基本信息（缩略图由调用方按 path 提供）。"""
+    use_custom = TRAIN_TPL.exists()
+    p = TRAIN_TPL if use_custom else ROOT / "assets" / "template.png"
+    return {"path": str(p), "source": "custom" if use_custom else "default"}
 
 
 # --------------------------------------------------------------------------
