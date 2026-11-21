@@ -1,9 +1,9 @@
 """
-extract_template.py — 从官方标准图里裁出校徽，做成检测模板。
+extract_template.py — 从官方标准图里裁出目标，做成检测模板。
 
-输入：assets/candidate_1.jpg（校徽 + 标准字）
-输出：assets/nmu_badge.png（纯校徽，去白底）
-      assets/nmu_badge_mask.png（透明通道）
+输入：assets/candidate_1.jpg（目标 + 标准字）
+输出：assets/template.png（纯目标，去白底）
+      assets/template_mask.png（透明通道）
       docs/template_check.png（模板 + SIFT 特征点可视化）
 """
 from __future__ import annotations
@@ -35,7 +35,7 @@ def main() -> None:
                             np.ones((7, 7), np.uint8), iterations=2)
     cnts, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     if not cnts:
-        raise SystemExit("没找到校徽区域")
+        raise SystemExit("没找到目标区域")
     c = max(cnts, key=cv2.contourArea)
     x, y, bw, bh = cv2.boundingRect(c)
     pad = 6
@@ -48,7 +48,7 @@ def main() -> None:
     badge = cv2.resize(badge, None, fx=2.2, fy=2.2, interpolation=cv2.INTER_CUBIC)
     blur = cv2.GaussianBlur(badge, (0, 0), 1.2)
     badge = cv2.addWeighted(badge, 1.55, blur, -0.55, 0)
-    cv2.imwrite(str(ASSETS / "nmu_badge.png"), badge)
+    cv2.imwrite(str(ASSETS / "template.png"), badge)
 
     # 透明底版本（白底转 alpha）
     g = cv2.cvtColor(badge, cv2.COLOR_BGR2GRAY)
@@ -56,7 +56,7 @@ def main() -> None:
     alpha = cv2.morphologyEx(alpha, cv2.MORPH_CLOSE, np.ones((3, 3), np.uint8))
     bgra = cv2.cvtColor(badge, cv2.COLOR_BGR2BGRA)
     bgra[:, :, 3] = alpha
-    cv2.imwrite(str(ASSETS / "nmu_badge_mask.png"), bgra)
+    cv2.imwrite(str(ASSETS / "template_mask.png"), bgra)
 
     # 模板的 SIFT 质量检查
     sift = cv2.SIFT_create()
@@ -70,7 +70,7 @@ def main() -> None:
                 cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
     DOCS.mkdir(exist_ok=True)
     cv2.imwrite(str(DOCS / "template_check.png"), stack)
-    print("-> assets/nmu_badge.png  docs/template_check.png")
+    print("-> assets/template.png  docs/template_check.png")
 
 
 if __name__ == "__main__":

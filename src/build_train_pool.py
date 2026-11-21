@@ -1,7 +1,7 @@
 """
-build_train_pool.py — 造「含校徽 / 不含校徽」二分类训练集。
+build_train_pool.py — 造「含目标 / 不含目标」二分类训练集。
 
-正样本：把校徽贴到真实背景（官网抓的图）上，随机旋转/缩放/透视/亮度/模糊
+正样本：把目标贴到真实背景（官网抓的图）上，随机旋转/缩放/透视/亮度/模糊
 负样本：同一批背景的随机裁块，外加「相似干扰」——校庆标识、其他高校 logo、文字块
 
 产物：data/train_pool.npz  （x: uint8 N×S×S×3, y: 0/1）
@@ -15,8 +15,8 @@ import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
 SAMPLES = ROOT / "data" / "samples"
-BADGE = ROOT / "assets" / "nmu_badge_mask.png"
-BADGE_CLR = ROOT / "assets" / "nmu_badge.png"
+BADGE = ROOT / "assets" / "template_mask.png"
+BADGE_CLR = ROOT / "assets" / "template.png"
 POOL = ROOT / "data" / "train_pool.npz"
 SIZE = 96
 
@@ -80,7 +80,7 @@ def make_positive(bg: np.ndarray, badge: np.ndarray,
     roi[:] = (b[:, :, :3].astype(np.float32) * a
               + roi.astype(np.float32) * (1 - a)).astype(np.uint8)
 
-    # 贴着校徽裁一块（含少量上下文），模拟真实图片里的局部区域
+    # 贴着目标裁一块（含少量上下文），模拟真实图片里的局部区域
     cx = ox + bw // 2 + int(rng.integers(-bw // 3, bw // 3 + 1))
     cy = oy + bh // 2 + int(rng.integers(-bh // 3, bh // 3 + 1))
     side = int(max(bw, bh) * rng.uniform(1.6, 3.2))
@@ -99,7 +99,7 @@ def make_negative(bg: np.ndarray, badge_clr: np.ndarray,
     y0 = int(rng.integers(0, max(1, h - side)))
     crop = bg[y0:y0 + side, x0:x0 + side].copy()
 
-    # 30% 加「相似干扰」：把校徽模糊/极度缩小/裁剪，让人也难一眼认出
+    # 30% 加「相似干扰」：把目标模糊/极度缩小/裁剪，让人也难一眼认出
     if rng.random() < 0.3:
         s = float(rng.uniform(0.04, 0.12))
         tw = max(10, int(w * s))
@@ -120,7 +120,7 @@ def main(n_per_class: int = 1200, seed: int = 21) -> None:
     badge = cv2.imread(str(BADGE), cv2.IMREAD_UNCHANGED)
     badge_clr = cv2.imread(str(BADGE_CLR), cv2.IMREAD_COLOR)
     if badge is None or badge_clr is None:
-        raise SystemExit("缺少 assets/nmu_badge*.png")
+        raise SystemExit("缺少 assets/template*.png")
 
     xs, ys = [], []
     for i in range(n_per_class):

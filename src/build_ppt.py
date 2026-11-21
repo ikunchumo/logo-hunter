@@ -184,7 +184,7 @@ def build() -> None:
          15, False, SUB, first=True, after=0)
     cards = [
         ("输入", "一个文件夹\n几百到几万张图片", "混着风景、海报、\n截图、二维码", BLUE),
-        ("要找的", "一个固定图案\n（校徽 / logo / 标识）", "可能被旋转、缩放、\n压缩、贴在小角落", AMBER),
+        ("要找的", "一个固定图案\n（logo / 标识 / 徽章）", "可能被旋转、缩放、\n压缩、贴在小角落", AMBER),
         ("输出", "命中的图片列表", "并框出目标的\n位置", GREEN),
     ]
     for i, (t, d1, d2, color) in enumerate(cards):

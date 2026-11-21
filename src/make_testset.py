@@ -1,7 +1,7 @@
 """
 make_testset.py — 造一个「图库里混着各种图片」的测试集，用来量检测器准不准。
 
-正样本：把校徽贴到校园照、纯色、纹理背景上，随机
+正样本：把目标贴到校园照、纯色、纹理背景上，随机
         缩放（背景宽的 12%~55%）、旋转 ±35°、透视、亮度对比度、模糊、JPEG 压缩
 负样本：校园风景、校庆标识、标准字、随机纹理、以及其他图形
 
@@ -20,7 +20,7 @@ ROOT = Path(__file__).resolve().parents[1]
 ASSETS = ROOT / "assets"
 OUT = ROOT / "data" / "testset"
 
-BADGE = ASSETS / "nmu_badge_mask.png"
+BADGE = ASSETS / "template_mask.png"
 
 
 def load_backgrounds() -> list[np.ndarray]:
@@ -127,7 +127,7 @@ def main(n_pos: int = 40, n_neg: int = 30, seed: int = 11) -> None:
 
     badge = cv2.imread(str(BADGE), cv2.IMREAD_UNCHANGED)
     if badge is None:
-        raise SystemExit("缺少 assets/nmu_badge_mask.png，先跑 extract_template.py")
+        raise SystemExit("缺少 assets/template_mask.png，先跑 extract_template.py")
     bgs = load_backgrounds()
     print(f"背景池 {len(bgs)} 张")
 
@@ -145,7 +145,7 @@ def main(n_pos: int = 40, n_neg: int = 30, seed: int = 11) -> None:
     for i in range(n_neg):
         bg = bgs[(i * 3 + 1) % len(bgs)]
         h, w = bg.shape[:2]
-        # 随机裁剪一块 + 变换，模拟"不含校徽的普通图片"
+        # 随机裁剪一块 + 变换，模拟"不含目标的普通图片"
         ch, cw = int(h * rng.uniform(0.6, 1.0)), int(w * rng.uniform(0.5, 0.9))
         y0 = int(rng.integers(0, max(1, h - ch)))
         x0 = int(rng.integers(0, max(1, w - cw)))

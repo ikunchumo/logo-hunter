@@ -1,9 +1,9 @@
 ﻿"""
-detector.py — 用 SIFT 特征匹配在任意图片里定位「南京医科大学校徽」。
+detector.py — 用 SIFT 特征匹配在任意图片里定位「指定目标」。
 
 为什么用特征匹配而不是训练一个检测网络？
 ----------------------------------------
-校徽是一个**固定图案**：可能有旋转、缩放、透视、光照变化、轻微遮挡，
+目标是一个**固定图案**：可能有旋转、缩放、透视、光照变化、轻微遮挡，
 但图案本身的局部纹理（盾形轮廓、蛇杖、麦穗、文字）不会变。
 SIFT 恰好对这些变换不变，而且**不需要任何训练数据**——只要一张模板。
 
@@ -30,7 +30,7 @@ import cv2
 import numpy as np
 
 ROOT = Path(__file__).resolve().parents[1]
-TEMPLATE = ROOT / "assets" / "nmu_badge.png"
+TEMPLATE = ROOT / "assets" / "template.png"
 
 
 @dataclass

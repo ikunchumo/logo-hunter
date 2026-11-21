@@ -1,5 +1,5 @@
 ﻿"""
-classify_samples.py — 用 SIFT 检测器把抓来的图自动分成「含校徽 / 不含校徽」。
+classify_samples.py — 用 SIFT 检测器把抓来的图自动分成「含目标 / 不含目标」。
 
 这一步本身就是个展示：检测器先跑一遍，人工只需抽查几张。
 """
@@ -52,8 +52,8 @@ def main() -> None:
         w.writeheader()
         w.writerows(rows)
     n_pos = sum(r["label"] == "with_badge" for r in rows)
-    print(f"\n含校徽 {n_pos} 张 -> {POS}")
-    print(f"不含校徽 {len(rows)-n_pos} 张 -> {NEG}")
+    print(f"\n含目标 {n_pos} 张 -> {POS}")
+    print(f"不含目标 {len(rows)-n_pos} 张 -> {NEG}")
 
 
 if __name__ == "__main__":

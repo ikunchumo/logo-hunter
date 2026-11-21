@@ -1,7 +1,7 @@
 """
 crawl_samples.py — 从南医大官网抓一批真实图片，作为「示例图库」。
 
-抓完之后用 SIFT 检测器自动分成「含校徽 / 不含校徽」，人工只需抽查。
+抓完之后用 SIFT 检测器自动分成「含目标 / 不含目标」，人工只需抽查。
 """
 from __future__ import annotations
 
