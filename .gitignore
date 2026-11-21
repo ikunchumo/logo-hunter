@@ -1,4 +1,4 @@
-# Python
+# ===== Python =====
 __pycache__/
 *.py[cod]
 *.so
@@ -6,29 +6,35 @@ __pycache__/
 venv/
 env/
 
-# 杩愯浜х墿
+# ===== Runtime outputs =====
 results/
 docs/app.log
 docs/app_err.log
 docs/preview*/
 docs/ppt_preview/
+docs/ppt_v2/
 data/eval_last.json
 data/sweep.json
 *.log
 
-# 澶ф枃浠讹細鍙啀鐢熸垚锛屼笉鍏ュ簱
+# ===== Large files (regenerable by scripts) =====
 data/train_pool.npz
 data/samples/raw/
 data/testset/pos/
 data/testset/neg/
 models/*.pt
 
-# 缂栬緫鍣?/ 绯荤粺
+# ===== Report materials (kept locally, not in repo) =====
+docs/*.pptx
+docs/*.pdf
+docs/*.md
+
+# ===== Editor / OS =====
 .vscode/
 .idea/
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# Office 临时锁文件
-~\$*
+# ===== Office lock files =====
+~$*

@@ -232,56 +232,6 @@ python src/app.py                  # 网页版（扫描 + 训练）
 > 仓库里不含大文件（`data/train_pool.npz`、`data/samples/raw/`、`data/testset/`、
 > `models/*.pt` 都被 `.gitignore` 排除），跑一遍上面的脚本就能全部再生成。
 
-## 发布到 GitHub
-
-GitHub 从 2021 年起**不再接受账号密码**登录 git（会返回 401），必须用
-Personal Access Token（PAT）。
-
-**第一步：生成 token**
-
-1. 打开 https://github.com/settings/tokens
-2. 点 `Generate new token` → `Generate new token (classic)`
-3. Note 随便填，Expiration 选 30 天或 90 天
-4. 勾选 **`repo`**（整块勾上就够）
-5. 点 `Generate token`，**复制以 `ghp_` 开头的那串**（只显示一次）
-
-**第二步：一键推送**
-
-仓库里已经带了脚本，把用户名和 token 填进去：
-
-```powershell
-cd D:\project\logo-hunter
-.\push_to_github.ps1 -User 你的GitHub用户名 -Token ghp_你的token
-```
-
-脚本会：建仓库（已存在则跳过）→ 配 remote → 推送 → 推送完把 token 从 git 配置里抹掉。
-
-**手动版**（等价）：
-
-```powershell
-git remote add origin https://github.com/<用户名>/logo-hunter.git
-git branch -M main
-git push -u origin main      # 弹窗时密码栏填 PAT，不是账号密码
-```
-
-## 局限
-
-| 情况 | 表现 | 缓解办法 |
-|---|---|---|
-| 校徽在图中小于 ~40 px | 容易漏 | 用 `scales=(1.0, 1.7, 2.6, 4.0)` 并放大原图 |
-| 只剩剪影 / 单色版校徽 | 可能漏（纹理丢失） | 把单色版也做成一张模板，多模板取最大 |
-| 严重遮挡（挡掉一半以上） | 会漏 | 降 `min_inliers` 到 6~8，接受更多误检 |
-| 中间结果被高压缩 | 内点掉到阈值下 | 存中间图时用 JPEG quality ≥95 |
-| 大量重复纹理背景（如密集文字） | 偶发误检 | 提高 `min_inliers`，或加颜色先验（校徽主色红/黄/蓝） |
-| 校徽被大幅拉伸变形 | 长宽比校验会拒 | 放宽 `ar` 范围到 0.3~2.0 |
-
-## 能不能不用模板、直接训练一个检测器？
-
-可以，但要标注几百张带框的图，而且换一个校徽就得重训。
-SIFT 路线的好处是**换 logo 只要换一张图**，代价是对极端小目标更敏感。
-如果目标是「一个图库长期复用、logo 固定」，特征匹配是更划算的选择；
-如果要做「通用 logo 检测」（几百种 logo 混在一起），才值得上 YOLO / DETR 那套。
-
 ## 开源协议
 
 MIT License — 见 [LICENSE](LICENSE)。
