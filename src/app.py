@@ -15,6 +15,7 @@ app.py — 图片目标检测器（苹果风双页：扫描 / 训练）
 from __future__ import annotations
 
 import argparse
+import base64
 import json
 import sys
 import time
@@ -36,6 +37,40 @@ DET: BadgeDetector | None = None
 CACHE: dict[str, dict] = {}
 DIR_CACHE: dict[str, dict] = {}
 SAMPLES = ROOT / "data" / "samples"
+CUSTOM_TPL = ROOT / "assets" / "custom_template.png"
+DEFAULT_TPL = ROOT / "assets" / "template.png"
+TPL_INFO: dict = {"source": "default", "path": str(DEFAULT_TPL),
+                  "width": 0, "height": 0, "keypoints": 0}
+
+
+def reload_detector(path: Path) -> dict:
+    """换模板 = 重建检测器 + 清空所有缓存。
+
+    关键点太少的模板（<80）会在 RANSAC 里靠运气凑出内点，产生大量假匹配，
+    所以直接拒绝使用。
+    """
+    global DET
+    probe = BadgeDetector(path)
+    kp = len(probe.kp_t)
+    if kp < 80:
+        raise ValueError(
+            f"这张图只提取到 {kp} 个特征点，太少，匹配会不可靠。"
+            "请换一张边缘清晰、细节丰富、长边 300px 以上的图")
+    DET = probe
+    CACHE.clear()
+    DIR_CACHE.clear()
+    TPL_INFO.update({"path": str(path), "width": DET.tw, "height": DET.th,
+                     "keypoints": kp,
+                     "source": "custom" if path == CUSTOM_TPL else "default"})
+    return dict(TPL_INFO)
+
+
+def template_info() -> dict:
+    if DET is None:
+        return dict(TPL_INFO)
+    TPL_INFO.update({"width": DET.tw, "height": DET.th,
+                     "keypoints": len(DET.kp_t)})
+    return dict(TPL_INFO)
 
 PAGE = r"""<!doctype html>
 <html lang="zh-CN"><head><meta charset="utf-8">
@@ -114,6 +149,16 @@ PAGE = r"""<!doctype html>
   .badge.miss{background:var(--orange)}
   .badge.fp{background:var(--red)}
   .badge.ok{background:#98989d}
+
+  /* 模板卡片 */
+  .tplcard{margin-top:26px;display:flex;align-items:center;gap:16px;
+           padding:16px 20px}
+  .tplcard img{width:52px;height:52px;object-fit:contain;border-radius:10px;
+           background:#fafafa;border:.5px solid var(--line);padding:3px}
+  .tplmeta{flex:1;min-width:0}
+  .tplname{font-size:13.5px;font-weight:600}
+  .tplsub{font-size:12px;color:var(--sub);margin-top:3px}
+  .tplsub.warn{color:var(--orange)}
   .tile .prob{height:4px;background:#ededf0;margin:0 11px;border-radius:4px;overflow:hidden}
   .tile .prob > div{height:100%;border-radius:4px}
   .tile .ptxt{padding:5px 11px 9px;font-size:10.5px;color:var(--sub);
@@ -190,7 +235,21 @@ PAGE = r"""<!doctype html>
 <section class="wrap" id="view-scan">
   <h1>在一堆图片里<br><span class="grad">找出含目标的那几张。</span></h1>
 
-  <div class="card" style="margin-top:26px">
+  <!-- 当前检测模板：可上传替换 -->
+  <div class="card tplcard">
+    <img id="tpl-img" src="/api/template/image" alt="template">
+    <div class="tplmeta">
+      <div class="tplname">当前检测模板</div>
+      <div class="tplsub" id="tpl-meta">加载中…</div>
+    </div>
+    <div class="row" style="flex:0 0 auto;gap:8px">
+      <button class="btn ghost" id="tpl-upload">更换模板</button>
+      <button class="btn ghost" id="tpl-reset">恢复默认</button>
+    </div>
+    <input type="file" id="tpl-file" accept="image/*" hidden>
+  </div>
+
+  <div class="card">
     <div class="row">
       <input type="text" id="path" placeholder="D:\photos">
       <button class="btn primary" id="go">开始扫描</button>
@@ -261,14 +320,13 @@ PAGE = r"""<!doctype html>
       <div class="chart-head">
         <h3>CNN 搜索演示</h3>
         <div class="legend">
-          <span><i style="background:#34c759"></i>CNN 认为有</span>
-          <span><i style="background:#ff9500"></i>漏检（SIFT 能找到）</span>
-          <span><i style="background:#ff3b30"></i>误报</span>
+          <span><i style="background:#34c759"></i>判为含目标</span>
+          <span><i style="background:#c7c7cc"></i>判为不含</span>
         </div>
       </div>
       <p class="hint" style="margin-top:2px">
-        用刚训好的模型扫一遍示例图库，结果和 SIFT 并排对照 ——
-        整图缩到 96px 后小目标会消失，这正是「CNN 粗筛」方案失效的原因。
+        用刚训好的模型给示例图库逐张打分，P ≥ 50% 判为含目标。
+        每张图右下角同时标出 SIFT 的结果作为对照。
       </p>
       <div class="row" style="margin-top:14px">
         <button class="btn primary" id="cnn-run" style="flex:0 0 auto;padding-left:26px;padding-right:26px">
@@ -341,6 +399,51 @@ async function scan(path){
 $('go').onclick = () => { const p=$('path').value.trim(); if(p) scan(p); };
 $('path').addEventListener('keydown', e=>{ if(e.key==='Enter'){
   const p=$('path').value.trim(); if(p) scan(p); }});
+
+/* ---------- 模板：查看 / 更换 / 恢复默认 ---------- */
+async function refreshTemplate(){
+  try{
+    const t = await (await fetch('/api/template')).json();
+    $('tpl-meta').textContent =
+      `${t.width}×${t.height} · ${t.keypoints} 个特征点 · ` +
+      (t.source === 'custom' ? '自定义' : '默认模板');
+    $('tpl-meta').classList.remove('warn');
+    $('tpl-img').src = '/api/template/image?t=' + Date.now();
+  }catch(e){ $('tpl-meta').textContent = '模板信息读取失败'; }
+}
+refreshTemplate();
+
+$('tpl-upload').onclick = () => $('tpl-file').click();
+$('tpl-file').onchange = e => {
+  const f = e.target.files[0];
+  if(!f) return;
+  const rd = new FileReader();
+  rd.onload = async ev => {
+    $('tpl-meta').textContent = '正在提取特征点…';
+    $('tpl-meta').classList.remove('warn');
+    try{
+      const r = await (await fetch('/api/template',{method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({image: ev.target.result})})).json();
+      if(r.error){ $('tpl-meta').textContent = r.error; $('tpl-meta').classList.add('warn'); return; }
+      await refreshTemplate();
+      if(r.warning){ $('tpl-meta').textContent = r.warning; $('tpl-meta').classList.add('warn'); }
+      grid.innerHTML=''; empty.classList.remove('hidden');
+      empty.innerHTML = '模板已更换<br>重新扫描生效';
+      stats.innerHTML = '';
+    }catch(err){ $('tpl-meta').textContent = '上传失败：' + err.message; }
+  };
+  rd.readAsDataURL(f);
+  e.target.value = '';
+};
+
+$('tpl-reset').onclick = async () => {
+  const r = await (await fetch('/api/template/reset',{method:'POST'})).json();
+  await refreshTemplate();
+  grid.innerHTML=''; stats.innerHTML='';
+  empty.classList.remove('hidden');
+  empty.innerHTML = '已恢复默认模板<br>重新扫描生效';
+};
 
 /* ---------- 训练 ---------- */
 const lrFromSlider = v => Math.pow(10, -4 + v/100*2);   // 1e-4 ~ 1e-2
@@ -489,37 +592,23 @@ $('cnn-run').onclick = async ()=>{
       headers:{'Content-Type':'application/json'}, body:'{}'})).json();
     if(r.error){ st.textContent = r.error; btn.disabled=false; btn.textContent='用当前模型扫描图库'; return; }
 
-    const missed = r.results.filter(x=>x.truth===1 && !x.cnn_found).length;
+    const hits = r.results.filter(x=>x.cnn_found).length;
     $('cnn-stats').classList.remove('hidden');
     $('cnn-stats').innerHTML = `
       <div class="stat"><b>${r.total}</b><span>张图片</span></div>
-      <div class="stat"><b style="color:#ff9500">${r.recall*100|0}%</b><span>召回率（漏 ${r.n_pos - r.tp} / ${r.n_pos}）</span></div>
-      <div class="stat"><b style="color:#ff3b30">${r.precision*100|0}%</b><span>精确率（误报 ${r.fp} 张）</span></div>
-      <div class="stat"><b class="hit">${r.sift_hits}</b><span>SIFT 在同批图上的命中</span></div>
+      <div class="stat"><b class="hit">${hits}</b><span>CNN 判为含目标</span></div>
+      <div class="stat"><b>${r.sift_hits}</b><span>SIFT 命中（对照）</span></div>
       <div class="stat"><b>${r.seconds}s</b><span>CNN 推理耗时</span></div>`;
 
-    // 排序：漏检 → 正确命中 → 误报 → 正确排除（每组内部按置信度排）
-    const score = x => {
-      if (x.truth===1 && !x.cnn_found) return 0;   // 漏检
-      if (x.truth===1 &&  x.cnn_found) return 1;   // 正确命中
-      if (x.truth===0 &&  x.cnn_found) return 2;   // 误报
-      return 3;                                     // 正确排除
-    };
-    const sorted = [...r.results].sort((a,b)=> score(a)-score(b) || b.prob-a.prob);
+    // 只按置信度排序，不做对错标注
+    const sorted = [...r.results].sort((a,b)=> b.prob - a.prob);
     const LIMIT = 24;
     const showN = Math.min(LIMIT, sorted.length);
     const card = x => {
-      const miss = x.truth===1 && !x.cnn_found;
-      const fp   = x.truth===0 && x.cnn_found;
-      const cls  = miss ? 'miss' : (fp ? 'fp' : (x.cnn_found ? 'hit' : ''));
-      const tag  = miss ? '<span class="badge miss">漏检</span>'
-                 : fp   ? '<span class="badge fp">误报</span>'
-                 : x.cnn_found ? '<span class="badge">命中</span>'
-                 : '<span class="badge ok">正确排除</span>';
       const siftTxt = x.sift_found === null ? '' :
         `<span style="color:${x.sift_found?'#34c759':'#98989d'}">SIFT ${x.sift_found?('✓ '+x.sift_inliers):'✗'}</span>`;
-      return `<div class="tile ${cls}">
-        ${tag}
+      return `<div class="tile ${x.cnn_found?'hit':''}">
+        ${x.cnn_found?'<span class="badge">命中</span>':''}
         <img loading="lazy" src="/api/thumb?path=${encodeURIComponent(x.file)}" alt="">
         <div class="cap"><i title="${x.name}">${x.name}</i>${siftTxt}</div>
         <div class="prob"><div style="width:${Math.max(2,x.prob*100)}%;
@@ -538,7 +627,7 @@ $('cnn-run').onclick = async ()=>{
     if (more) more.onclick = () => {
       $('cnn-grid').innerHTML = sorted.map(card).join('');
     };
-    st.textContent = `完成：${r.n_pos} 张含目标，CNN 认出 ${r.tp} 张；SIFT 在同批图命中 ${r.sift_hits} 张`;
+    st.textContent = `完成：${r.total} 张图里，CNN 判为含目标 ${hits} 张，SIFT 命中 ${r.sift_hits} 张`;
   }catch(e){
     st.textContent = '出错：' + e.message;
   }
@@ -651,6 +740,12 @@ class Handler(BaseHTTPRequestHandler):
             self._json(DIR_CACHE.get(key) or {"empty": True})
         elif u.path == "/api/train/status":
             self._json(trainer.status())
+        elif u.path == "/api/template":
+            self._json(template_info())
+        elif u.path == "/api/template/image":
+            p = Path(template_info()["path"])
+            data = p.read_bytes() if p.exists() else b""
+            self._send(200, data, "image/png")
         elif u.path == "/api/thumb":
             self._thumb(parse_qs(u.query))
         else:
@@ -695,7 +790,9 @@ class Handler(BaseHTTPRequestHandler):
                 t0 = time.time()
                 files = list(iter_images(folder, True))[:1500]
                 from parallel_scan import scan_paths
-                results = scan_paths(files, workers=8)
+                # 关键：把当前模板路径传下去，否则子进程会用默认模板
+                results = scan_paths(files, workers=8,
+                                     template_path=template_info()["path"])
                 for rec in results:
                     CACHE[rec["file"]] = rec
                 secs = round(time.time() - t0, 1)
@@ -710,7 +807,6 @@ class Handler(BaseHTTPRequestHandler):
             elif path == "/api/train/stop":
                 self._json(trainer.stop())
             elif path == "/api/cnn/scan":
-                # CNN 搜索演示：同时带上 SIFT 的结果做对照
                 cnn = trainer.scan_with_model(limit=60)
                 try:
                     sift = _sample_scan()
@@ -723,6 +819,50 @@ class Handler(BaseHTTPRequestHandler):
                     r["sift_inliers"] = int(s["inliers"]) if s else 0
                 cnn["sift_hits"] = sum(1 for r in cnn["results"] if r.get("sift_found"))
                 self._json(cnn)
+            elif path == "/api/template":
+                req = json.loads(body or b"{}")
+                raw = req.get("image", "")
+                if not raw:
+                    self._json({"error": "没有收到图片"}, 400)
+                    return
+                b64 = raw.split(",", 1)[1] if "," in raw else raw
+                data = base64.b64decode(b64)
+                arr = np.frombuffer(data, np.uint8)
+                img = cv2.imdecode(arr, cv2.IMREAD_UNCHANGED)
+                if img is None:
+                    self._json({"error": "图片解码失败，换 PNG / JPG 试试"}, 400)
+                    return
+                # 带 alpha 的图合成到白底（SIFT 要的是灰度纹理）
+                if img.ndim == 3 and img.shape[2] == 4:
+                    a = img[:, :, 3:4].astype(np.float32) / 255.0
+                    bgr = img[:, :, :3].astype(np.float32)
+                    img = (bgr * a + 255.0 * (1 - a)).astype(np.uint8)
+                elif img.ndim == 2:
+                    img = cv2.cvtColor(img, cv2.COLOR_GRAY2BGR)
+                # 长边限制在 800，太大反而慢且没必要
+                h, w = img.shape[:2]
+                if max(h, w) > 800:
+                    s = 800 / max(h, w)
+                    img = cv2.resize(img, None, fx=s, fy=s,
+                                     interpolation=cv2.INTER_AREA)
+                CUSTOM_TPL.parent.mkdir(parents=True, exist_ok=True)
+                cv2.imwrite(str(CUSTOM_TPL), img)
+                try:
+                    info = reload_detector(CUSTOM_TPL)
+                except ValueError as e:
+                    CUSTOM_TPL.unlink(missing_ok=True)
+                    self._json({"error": str(e)}, 400)
+                    return
+                warn = None
+                if info["keypoints"] < 400:
+                    warn = (f"模板只有 {info['keypoints']} 个特征点，偏少，"
+                            "目标细节越多（文字、花纹）效果越好")
+                self._json({"ok": True, "warning": warn, **info})
+            elif path == "/api/template/reset":
+                if CUSTOM_TPL.exists():
+                    CUSTOM_TPL.unlink()
+                info = reload_detector(DEFAULT_TPL)
+                self._json({"ok": True, **info})
             else:
                 self._send(404, b"not found", "text/plain; charset=utf-8")
         except Exception as e:  # noqa: BLE001
@@ -735,10 +875,12 @@ def main():
     ap.add_argument("--port", type=int, default=8770)
     ap.add_argument("--host", default="127.0.0.1")
     args = ap.parse_args()
-    DET = BadgeDetector()
+    init_tpl = CUSTOM_TPL if CUSTOM_TPL.exists() else DEFAULT_TPL
+    info = reload_detector(init_tpl)
     srv = ThreadingHTTPServer((args.host, args.port), Handler)
     print(f"图像检测器已启动： http://{args.host}:{args.port}")
-    print(f"模板 {DET.tw}×{DET.th}，SIFT 点 {len(DET.kp_t)}")
+    print(f"模板 {info['width']}×{info['height']}，SIFT 点 {info['keypoints']}"
+          f"（{info['source']}）")
     print("训练池：" + ("已就绪" if (ROOT / 'data' / 'train_pool.npz').exists()
                         else "缺失，请运行 src/build_train_pool.py"))
     try:
