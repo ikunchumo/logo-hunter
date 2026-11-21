@@ -1,4 +1,4 @@
-﻿"""
+"""
 build_ppt.py — 生成项目汇报 PPT（16:9，16 页，含讲稿备注）。
 
 数据来源：项目实测结果 + docs/*.png
@@ -402,21 +402,31 @@ def build() -> None:
              "这才是真实难度。")
 
     # ---- 10 CNN 方案 ----
-    s = page(prs, "Method", "CNN 方案：可视化调参的训练页", 10, TOTAL)
-    pic(s, DOCS / "ui_train.png", Inches(0.55), Inches(1.55), Inches(8.1), Inches(4.9))
-    tf = textbox(s, Inches(8.9), Inches(1.75), Inches(3.8), Inches(4.8))
-    para(tf, "能调什么", 13, True, BLUE, first=True, after=10)
-    for line in ["每类样本数 100~1200", "训练轮数 3~40", "学习率 1e-4~1e-2（对数）",
-                 "批大小 16~128", "增强强度 0~1", "输入尺寸 64/96/128"]:
-        para(tf, "· " + line, 11, False, INK, after=7)
-    para(tf, "默认参数结果", 13, True, BLUE, before=8, after=8)
-    for k, v in [("测试准确率", "96.5%"), ("召回率", "99.3%"),
-                 ("训练耗时", "约 13 秒（RTX 5070）")]:
-        para(tf, f"{k}：{v}", 11.5, False, SUB, after=6)
-    para(tf, "后端在 GPU 上训练，前端每秒轮询，曲线逐 epoch 长出来。",
-         11, True, AMBER, before=6, after=0, line=1.35)
-    notes(s, "这一页展示「可交互」的部分：拖滑块 → 点开始 → 看曲线。\n"
-             "左侧是参数，右侧是实时曲线和结果指标。默认配置 13 秒跑完。")
+    s = page(prs, "Method", "CNN 方案：换目标 · 调参 · 训练", 10, TOTAL)
+    pic(s, DOCS / "ui_train.png", Inches(0.5), Inches(1.5), Inches(8.2), Inches(5.1))
+    tf = textbox(s, Inches(8.95), Inches(1.6), Inches(3.75), Inches(5.2))
+    para(tf, "训练目标可换", 13, True, GREEN, first=True, after=8)
+    for line in ["上传任意图片作为 CNN 的训练对象",
+                 "与 SIFT 模板解耦：不需要特征点",
+                 "重建 1200 张训练数据约 4 秒"]:
+        para(tf, "· " + line, 10.5, False, INK, after=6, line=1.3)
+
+    para(tf, "能调什么", 13, True, BLUE, before=10, after=8)
+    for line in ["每类样本 100~1200 / 训练 3~40 轮",
+                 "学习率 1e-4~1e-2（对数滑块）",
+                 "批大小 16~128 / 增强强度 0~1",
+                 "输入尺寸 64 / 96 / 128"]:
+        para(tf, "· " + line, 10.5, False, INK, after=6, line=1.3)
+
+    para(tf, "默认结果", 13, True, BLUE, before=10, after=6)
+    para(tf, "96.5% 准确率 · 13 秒跑完（RTX 5070）", 10.5, True, AMBER,
+         after=0, line=1.3)
+    notes(s, "这一页讲三件事：换目标、调参、看结果。\n"
+             "重点是「训练目标可换」——上传一张图，4 秒重建 1200 张训练数据，"
+             "然后 13 秒训完。\n"
+             "这里和扫描页的模板是分开的：CNN 只需要知道目标长什么样，"
+             "不需要 SIFT 那样的强纹理，所以一张简单的图形也能训。\n"
+             "可以现场演示：把每类样本数拖到 100，准确率会掉到 55%。")
 
     # ---- 11 关键发现 ----
     s = page(prs, "Finding", "关键发现：CNN 粗筛这条路走不通", 11, TOTAL)
@@ -484,10 +494,13 @@ def build() -> None:
     # ---- 13 产品形态 ----
     s = page(prs, "Product", "最终形态：一个本地网页工具", 13, TOTAL)
     feats = [
-        ("扫描页", "填文件夹路径 → 逐张检测 → 命中的排前面、绿框标位置\n支持 ?dir=路径 直接打开结果", BLUE),
-        ("训练页", "六个参数滑块 + 实时曲线 + 结果指标卡片\n训练完自动保存模型", GREEN),
+        ("扫描页", "填文件夹路径 → 逐张检测 → 命中的排前面、绿框标位置\n"
+                   "顶部可直接更换 SIFT 检测模板（需 ≥80 个特征点）", BLUE),
+        ("训练页", "更换训练目标 → 重建数据（4 秒）→ 调参训练 → CNN 搜索演示\n"
+                   "训练目标与扫描模板解耦，任意图片都行", GREEN),
         ("命令行", "python src/scan.py D:\\photos --crop\n输出 CSV + 标注图 + 裁剪结果", AMBER),
-        ("可替换", "换目标只需替换 assets 里的模板图，代码零改动", RGBColor(0x5E, 0x5C, 0xE6)),
+        ("可替换", "两个目标各自独立：扫描换模板图、训练换训练目标，代码零改动",
+         RGBColor(0x5E, 0x5C, 0xE6)),
     ]
     for i, (t, d, c) in enumerate(feats):
         x = Inches(0.72 + (i % 2) * 6.05)
