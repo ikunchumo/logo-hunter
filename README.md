@@ -207,8 +207,10 @@ logo-hunter/
 ## 复现
 
 ```bash
+pip install -r requirements.txt
+
 python src/crawl_samples.py        # 抓真实图（可选，仓库里已带）
-python src/classify_samples.py     # 自动分含/不含校徽
+python src/classify_samples.py     # 自动分含/不含目标
 python src/extract_template.py     # 裁模板
 python src/make_testset.py         # 造测试集
 python src/evaluate.py             # 基线评估
@@ -218,9 +220,42 @@ python src/scan.py data\testset    # 批量扫描
 python src/app.py                  # 网页版（扫描 + 训练）
 ```
 
-环境：Python 3.11 + `opencv-python` 4.11 + `torch` 2.7（CUDA）。
-本机用 `D:\project\RVC\.venv`（有 cv2）和 `D:\project\SeedVC\.venv`（有 torch），
-一个装齐两者即可。
+环境：Python 3.11 + `opencv-python` 4.11 + `torch` 2.7（CUDA 可选）。
+
+> 仓库里不含大文件（`data/train_pool.npz`、`data/samples/raw/`、`data/testset/`、
+> `models/*.pt` 都被 `.gitignore` 排除），跑一遍上面的脚本就能全部再生成。
+
+## 发布到 GitHub
+
+GitHub 从 2021 年起**不再接受账号密码**登录 git（会返回 401），必须用
+Personal Access Token（PAT）。
+
+**第一步：生成 token**
+
+1. 打开 https://github.com/settings/tokens
+2. 点 `Generate new token` → `Generate new token (classic)`
+3. Note 随便填，Expiration 选 30 天或 90 天
+4. 勾选 **`repo`**（整块勾上就够）
+5. 点 `Generate token`，**复制以 `ghp_` 开头的那串**（只显示一次）
+
+**第二步：一键推送**
+
+仓库里已经带了脚本，把用户名和 token 填进去：
+
+```powershell
+cd D:\project\logo-hunter
+.\push_to_github.ps1 -User 你的GitHub用户名 -Token ghp_你的token
+```
+
+脚本会：建仓库（已存在则跳过）→ 配 remote → 推送 → 推送完把 token 从 git 配置里抹掉。
+
+**手动版**（等价）：
+
+```powershell
+git remote add origin https://github.com/<用户名>/logo-hunter.git
+git branch -M main
+git push -u origin main      # 弹窗时密码栏填 PAT，不是账号密码
+```
 
 ## 局限
 
