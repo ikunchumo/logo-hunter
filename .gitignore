@@ -25,6 +25,7 @@ data/testset/neg/
 models/*.pt
 
 # ===== Report materials (kept locally, not in repo) =====
+docs/*.docx
 docs/*.pptx
 docs/*.pdf
 docs/*.md

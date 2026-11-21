@@ -170,7 +170,7 @@ def build() -> None:
     tf = textbox(s, Inches(1.35), Inches(4.85), Inches(10), Inches(1.2))
     para(tf, "SIFT 特征匹配 + 单应性验证，附可视化训练页与网页版检索器",
          15, False, RGBColor(0xC7, 0xD4, 0xE2), first=True, after=14)
-    para(tf, "汇报人：________　　日期：2026.11", 12.5, False,
+    para(tf, "汇报人：郑斯元　　汇报对象：卓工协会 培训部　　2026.11", 11.5, False,
          RGBColor(0x9F, 0xB0, 0xC4))
     notes(s, "开场：这次汇报的项目是「图片目标检索」——给一个装满各种图片的文件夹，"
              "自动挑出里面含某个特定 logo / 标识的那几张，并且框出位置。\n"

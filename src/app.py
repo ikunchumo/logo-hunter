@@ -109,6 +109,15 @@ PAGE = r"""<!doctype html>
       padding:3px 9px;border-radius:20px;background:var(--green);color:#fff;
       box-shadow:0 2px 8px rgba(52,199,89,.4)}
   .tile.hit{outline:2px solid var(--green);outline-offset:-2px}
+  .tile.miss{outline:2px solid var(--orange);outline-offset:-2px}
+  .tile.fp{outline:2px solid var(--red);outline-offset:-2px}
+  .badge.miss{background:var(--orange)}
+  .badge.fp{background:var(--red)}
+  .badge.ok{background:#98989d}
+  .tile .prob{height:4px;background:#ededf0;margin:0 11px;border-radius:4px;overflow:hidden}
+  .tile .prob > div{height:100%;border-radius:4px}
+  .tile .ptxt{padding:5px 11px 9px;font-size:10.5px;color:var(--sub);
+              font-variant-numeric:tabular-nums}
 
   .empty{text-align:center;color:var(--sub);font-size:14px;padding:70px 0;line-height:2}
 
@@ -245,6 +254,30 @@ PAGE = r"""<!doctype html>
       <div class="hint" id="progress-text">等待开始</div>
       <div class="result hidden" id="result"></div>
       <div class="log" id="log">准备就绪。参数改完点「开始训练」。</div>
+    </div>
+
+    <!-- CNN 搜索演示：训练完之后，用这个模型扫一遍图库，和 SIFT 对照 -->
+    <div class="card" id="cnn-card" style="grid-column:1 / -1">
+      <div class="chart-head">
+        <h3>CNN 搜索演示</h3>
+        <div class="legend">
+          <span><i style="background:#34c759"></i>CNN 认为有</span>
+          <span><i style="background:#ff9500"></i>漏检（SIFT 能找到）</span>
+          <span><i style="background:#ff3b30"></i>误报</span>
+        </div>
+      </div>
+      <p class="hint" style="margin-top:2px">
+        用刚训好的模型扫一遍示例图库，结果和 SIFT 并排对照 ——
+        整图缩到 96px 后小目标会消失，这正是「CNN 粗筛」方案失效的原因。
+      </p>
+      <div class="row" style="margin-top:14px">
+        <button class="btn primary" id="cnn-run" style="flex:0 0 auto;padding-left:26px;padding-right:26px">
+          用当前模型扫描图库
+        </button>
+        <span class="hint" id="cnn-status" style="margin:0">点一下开始（约 1~2 秒，首次会先跑一遍 SIFT 对照）</span>
+      </div>
+      <div class="stats hidden" id="cnn-stats" style="margin:18px 2px 12px"></div>
+      <div class="grid" id="cnn-grid"></div>
     </div>
   </div>
 </section>
@@ -445,6 +478,73 @@ $('start').onclick = async ()=>{
 };
 $('stop').onclick = async ()=>{ await fetch('/api/train/stop',{method:'POST'}); };
 
+/* ---------- CNN 搜索演示 ---------- */
+$('cnn-run').onclick = async ()=>{
+  const btn = $('cnn-run'), st = $('cnn-status');
+  btn.disabled = true; btn.textContent = '扫描中…';
+  st.textContent = '正在用 CNN 推理，并准备 SIFT 对照…';
+  $('cnn-grid').innerHTML = ''; $('cnn-stats').classList.add('hidden');
+  try{
+    const r = await (await fetch('/api/cnn/scan',{method:'POST',
+      headers:{'Content-Type':'application/json'}, body:'{}'})).json();
+    if(r.error){ st.textContent = r.error; btn.disabled=false; btn.textContent='用当前模型扫描图库'; return; }
+
+    const missed = r.results.filter(x=>x.truth===1 && !x.cnn_found).length;
+    $('cnn-stats').classList.remove('hidden');
+    $('cnn-stats').innerHTML = `
+      <div class="stat"><b>${r.total}</b><span>张图片</span></div>
+      <div class="stat"><b style="color:#ff9500">${r.recall*100|0}%</b><span>召回率（漏 ${r.n_pos - r.tp} / ${r.n_pos}）</span></div>
+      <div class="stat"><b style="color:#ff3b30">${r.precision*100|0}%</b><span>精确率（误报 ${r.fp} 张）</span></div>
+      <div class="stat"><b class="hit">${r.sift_hits}</b><span>SIFT 在同批图上的命中</span></div>
+      <div class="stat"><b>${r.seconds}s</b><span>CNN 推理耗时</span></div>`;
+
+    // 排序：漏检 → 正确命中 → 误报 → 正确排除（每组内部按置信度排）
+    const score = x => {
+      if (x.truth===1 && !x.cnn_found) return 0;   // 漏检
+      if (x.truth===1 &&  x.cnn_found) return 1;   // 正确命中
+      if (x.truth===0 &&  x.cnn_found) return 2;   // 误报
+      return 3;                                     // 正确排除
+    };
+    const sorted = [...r.results].sort((a,b)=> score(a)-score(b) || b.prob-a.prob);
+    const LIMIT = 24;
+    const showN = Math.min(LIMIT, sorted.length);
+    const card = x => {
+      const miss = x.truth===1 && !x.cnn_found;
+      const fp   = x.truth===0 && x.cnn_found;
+      const cls  = miss ? 'miss' : (fp ? 'fp' : (x.cnn_found ? 'hit' : ''));
+      const tag  = miss ? '<span class="badge miss">漏检</span>'
+                 : fp   ? '<span class="badge fp">误报</span>'
+                 : x.cnn_found ? '<span class="badge">命中</span>'
+                 : '<span class="badge ok">正确排除</span>';
+      const siftTxt = x.sift_found === null ? '' :
+        `<span style="color:${x.sift_found?'#34c759':'#98989d'}">SIFT ${x.sift_found?('✓ '+x.sift_inliers):'✗'}</span>`;
+      return `<div class="tile ${cls}">
+        ${tag}
+        <img loading="lazy" src="/api/thumb?path=${encodeURIComponent(x.file)}" alt="">
+        <div class="cap"><i title="${x.name}">${x.name}</i>${siftTxt}</div>
+        <div class="prob"><div style="width:${Math.max(2,x.prob*100)}%;
+             background:${x.prob>=0.5?'#34c759':'#c7c7cc'}"></div></div>
+        <div class="ptxt">P(有目标) ${(x.prob*100).toFixed(0)}%</div>
+      </div>`;
+    };
+    $('cnn-grid').innerHTML = sorted.slice(0, showN).map(card).join('')
+      + (sorted.length > showN
+         ? `<div style="grid-column:1/-1;text-align:center;margin-top:6px">
+              <button class="btn ghost" id="cnn-more" style="padding:9px 20px;font-size:13px">
+                显示全部 ${sorted.length} 张（还有 ${sorted.length - showN} 张）
+              </button></div>`
+         : '');
+    const more = $('cnn-more');
+    if (more) more.onclick = () => {
+      $('cnn-grid').innerHTML = sorted.map(card).join('');
+    };
+    st.textContent = `完成：${r.n_pos} 张含目标，CNN 认出 ${r.tp} 张；SIFT 在同批图命中 ${r.sift_hits} 张`;
+  }catch(e){
+    st.textContent = '出错：' + e.message;
+  }
+  btn.disabled = false; btn.textContent = '用当前模型扫描图库';
+};
+
 /* 打开页面时同步一次训练状态（比如上次还在跑） */
 (async ()=>{
   const s = await (await fetch('/api/train/status')).json();
@@ -469,6 +569,11 @@ $('stop').onclick = async ()=>{ await fetch('/api/train/stop',{method:'POST'}); 
 (async ()=>{
   const qs = new URLSearchParams(location.search);
   if(qs.get('view') === 'train') show('train');
+  if(qs.get('cnn') === '1'){
+    show('train');
+    setTimeout(()=>{ const b=$('cnn-run'); if(b) b.click(); }, 250);
+    return;
+  }
   const dir = qs.get('dir');
   if(!dir) return;
   $('path').value = dir;
@@ -604,6 +709,20 @@ class Handler(BaseHTTPRequestHandler):
                 self._json(trainer.start(params))
             elif path == "/api/train/stop":
                 self._json(trainer.stop())
+            elif path == "/api/cnn/scan":
+                # CNN 搜索演示：同时带上 SIFT 的结果做对照
+                cnn = trainer.scan_with_model(limit=60)
+                try:
+                    sift = _sample_scan()
+                    smap = {r["file"]: r for r in sift["results"]}
+                except Exception:  # noqa: BLE001
+                    smap = {}
+                for r in cnn["results"]:
+                    s = smap.get(r["file"])
+                    r["sift_found"] = bool(s["found"]) if s else None
+                    r["sift_inliers"] = int(s["inliers"]) if s else 0
+                cnn["sift_hits"] = sum(1 for r in cnn["results"] if r.get("sift_found"))
+                self._json(cnn)
             else:
                 self._send(404, b"not found", "text/plain; charset=utf-8")
         except Exception as e:  # noqa: BLE001

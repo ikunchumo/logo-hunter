@@ -133,7 +133,14 @@ def _log(msg: str) -> None:
 
 def status() -> dict:
     with _LOCK:
-        return dict(STATE)
+        s = dict(STATE)
+    if not s.get("device"):
+        try:
+            s["device"] = (torch.cuda.get_device_name(0)
+                           if torch.cuda.is_available() else "CPU")
+        except Exception:  # noqa: BLE001
+            s["device"] = "CPU"
+    return s
 
 
 def start(params: dict) -> dict:
@@ -283,6 +290,85 @@ def stop() -> dict:
         STATE["running"] = False
     _log("已请求停止")
     return {"ok": True}
+
+
+# --------------------------------------------------------------------------
+# CNN 搜索演示：用训好的模型扫一遍示例图库，和 SIFT 的结果对照
+# --------------------------------------------------------------------------
+def scan_with_model(limit: int = 60) -> dict:
+    """用 models/badge_cnn.pt 对示例图库做二分类推理。
+
+    返回每张图的 P(有目标)，并附真实标签（按所在目录）。
+    调用方可以再合并 SIFT 的检测结果做对照 —— 这正是"CNN 粗筛"方案的实测：
+    整图缩到 96px 后，小目标会被漏掉。
+    """
+    import cv2
+
+    if not MODEL.exists():
+        raise FileNotFoundError("还没有训练好的模型，先在训练页跑一次")
+    blob = torch.load(MODEL, map_location="cpu")
+    net = SmallCNN(2, blob.get("width", 48))
+    net.load_state_dict(blob["state_dict"])
+    net.eval()
+    dev = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    net.to(dev)
+    size = int(blob.get("size", 96))
+
+    samples = ROOT / "data" / "samples"
+    items: list[tuple[Path, int]] = []
+    for name, label in (("with_badge", 1), ("without_badge", 0)):
+        d = samples / name
+        if not d.exists():
+            continue
+        for p in sorted(d.glob("*.jpg")):
+            items.append((p, label))
+    items = items[:limit]
+    if not items:
+        raise FileNotFoundError("示例图库为空：data/samples/")
+
+    t0 = time.time()
+    out: list[dict] = []
+    batch: list[np.ndarray] = []
+    metas: list[tuple[Path, int]] = []
+
+    def flush():
+        if not batch:
+            return
+        x = torch.from_numpy(np.stack(batch)).permute(0, 3, 1, 2).float().div_(255.0)
+        x = ((x - 0.5) / 0.25).to(dev)
+        with torch.no_grad():
+            prob = F.softmax(net(x), dim=1)[:, 1].cpu().numpy()
+        for (p, truth), pr in zip(metas, prob):
+            out.append({"file": str(p), "name": p.name, "prob": round(float(pr), 4),
+                        "cnn_found": bool(pr >= 0.5), "truth": truth})
+        batch.clear()
+        metas.clear()
+
+    for p, truth in items:
+        data = np.fromfile(str(p), dtype=np.uint8)
+        img = cv2.imdecode(data, cv2.IMREAD_COLOR)
+        if img is None:
+            continue
+        # 统一到模型输入尺寸，否则 batch 拼不起来
+        img = cv2.resize(cv2.cvtColor(img, cv2.COLOR_BGR2RGB), (size, size),
+                         interpolation=cv2.INTER_AREA)
+        batch.append(img)
+        metas.append((p, truth))
+        if len(batch) >= 64:
+            flush()
+    flush()
+
+    n_pos = sum(1 for r in out if r["truth"] == 1)
+    tp = sum(1 for r in out if r["truth"] == 1 and r["cnn_found"])
+    fp = sum(1 for r in out if r["truth"] == 0 and r["cnn_found"])
+    return {
+        "total": len(out), "n_pos": n_pos, "tp": tp, "fp": fp,
+        "recall": round(tp / max(n_pos, 1), 4),
+        "precision": round(tp / max(tp + fp, 1), 4),
+        "seconds": round(time.time() - t0, 2),
+        "size": size, "device": str(dev),
+        "results": out,
+    }
 
 
 if __name__ == "__main__":
