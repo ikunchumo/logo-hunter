@@ -1,8 +1,15 @@
 # 校徽猎手 logo-hunter
 
-给一个装满各种图片的文件夹，**自动挑出里面含「南京医科大学校徽」的那几张**，
-并在图上把校徽框出来。自带**可视化训练页**（拖滑块调参、实时看曲线），
-也能换成你自己的校徽 / logo。
+> 给一个装满各种图片的文件夹，**自动挑出里面含「南京医科大学校徽」的那几张**，
+> 并在图上把校徽框出来。自带**可视化训练页**（拖滑块调参、实时看曲线），
+> 也能换成你自己的校徽 / logo。
+
+[![GitHub](https://img.shields.io/badge/GitHub-ikunchumo%2Flogo--hunter-181717?logo=github)](https://github.com/ikunchumo/logo-hunter)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+![Python](https://img.shields.io/badge/python-3.11+-3776AB?logo=python&logoColor=white)
+![OpenCV](https://img.shields.io/badge/OpenCV-4.11-5C3EE8?logo=opencv&logoColor=white)
+
+**仓库地址：https://github.com/ikunchumo/logo-hunter**
 
 ![扫描页](docs/ui_scan.png)
 
@@ -274,4 +281,21 @@ git push -u origin main      # 弹窗时密码栏填 PAT，不是账号密码
 SIFT 路线的好处是**换 logo 只要换一张图**，代价是对极端小目标更敏感。
 如果目标是「一个图库长期复用、logo 固定」，特征匹配是更划算的选择；
 如果要做「通用 logo 检测」（几百种 logo 混在一起），才值得上 YOLO / DETR 那套。
+
+## 开源协议
+
+MIT License — 见 [LICENSE](LICENSE)。
+
+代码、脚本、文档可自由使用、修改、商用，保留版权声明即可。
+
+## 致谢
+
+- [OpenCV](https://opencv.org/) — SIFT / FLANN / RANSAC 实现
+- [PyTorch](https://pytorch.org/) — CNN 训练
+- [python-pptx](https://python-pptx.readthedocs.io/) — 汇报 PPT 生成
+
+---
+
+如果这个项目对你有用，欢迎 Star ⭐
+[github.com/ikunchumo/logo-hunter](https://github.com/ikunchumo/logo-hunter)
 

@@ -1,4 +1,4 @@
-"""
+﻿"""
 build_ppt.py — 生成项目汇报 PPT（16:9，16 页，含讲稿备注）。
 
 数据来源：项目实测结果 + docs/*.png
@@ -18,7 +18,8 @@ from pptx.util import Inches, Pt
 
 ROOT = Path(__file__).resolve().parents[1]
 DOCS = ROOT / "docs"
-OUT = DOCS / "目标检测器_项目汇报.pptx"
+import os
+OUT = Path(os.environ.get("PPT_OUT", DOCS / "目标检测器_项目汇报.pptx"))
 
 FONT = "Microsoft YaHei"
 INK = RGBColor(0x1D, 0x1D, 0x1F)
@@ -154,7 +155,7 @@ def fill_table(tb, header, body, size=10.5, first_col_bold=False,
 def build() -> None:
     prs = Presentation()
     prs.slide_width, prs.slide_height = W, H
-    TOTAL = 16
+    TOTAL = 17
 
     # ---- 1 封面 ----
     s = prs.slides.add_slide(prs.slide_layouts[6])
@@ -532,8 +533,54 @@ def build() -> None:
          11.5, False, INK, first=True, after=0)
     notes(s, "结构这页可以快速过，重点说「每个脚本都能单独跑」。")
 
-    # ---- 15 局限 ----
-    s = page(prs, "Limitation", "局限与下一步", 15, TOTAL)
+    # ---- 15 开源信息 ----
+    s = page(prs, "Open Source", "开源信息", 15, TOTAL)
+    tf = textbox(s, Inches(0.72), Inches(1.6), Inches(11.9), Inches(0.55))
+    para(tf, "github.com/ikunchumo/logo-hunter", 30, True, BLUE, first=True,
+         after=0)
+    tf = textbox(s, Inches(0.72), Inches(2.2), Inches(11.9), Inches(0.4))
+    para(tf, "MIT License · 公开仓库 · 91 个文件 · 16.6 MB", 13, False, SUB,
+         first=True, after=0)
+
+    # 左：仓库里有什么
+    rect(s, Inches(0.72), Inches(2.85), Inches(5.85), Inches(3.35), LIGHT,
+         MSO_SHAPE.ROUNDED_RECTANGLE, 0.06)
+    tf = textbox(s, Inches(1.0), Inches(3.02), Inches(5.3), Inches(0.4))
+    para(tf, "仓库里有什么", 13.5, True, INK, first=True, after=0)
+    tf = textbox(s, Inches(1.0), Inches(3.5), Inches(5.35), Inches(2.5))
+    for line in ["13 个脚本：检测器 / 并行扫描 / 网页 / 训练 / 评测 / 调参",
+                 "58 张真实样本 + 检测模板（含 alpha 版）",
+                 "16 页汇报 PPT（带逐页讲稿备注）",
+                 "大文件不入库，跑脚本可再生成",
+                 "完整 README：原理、复现、局限、FAQ"]:
+        para(tf, "· " + line, 11, False, SUB, first=True if line.startswith("13") else False,
+             after=8, line=1.3)
+
+    # 右：三条命令
+    rect(s, Inches(6.77), Inches(2.85), Inches(5.85), Inches(3.35), LIGHT,
+         MSO_SHAPE.ROUNDED_RECTANGLE, 0.06)
+    tf = textbox(s, Inches(7.05), Inches(3.02), Inches(5.3), Inches(0.4))
+    para(tf, "三条命令跑起来", 13.5, True, INK, first=True, after=0)
+    tf = textbox(s, Inches(7.05), Inches(3.55), Inches(5.35), Inches(2.4))
+    for i, (cmd, col) in enumerate([
+        ("pip install -r requirements.txt", SUB),
+        ("python src/scan.py D:\\photos", BLUE),
+        ("python src/app.py  →  :8770", GREEN),
+    ]):
+        para(tf, cmd, 11.5, True, col, first=(i == 0), after=12,
+             line=1.3)
+    para(tf, "换目标：替换 assets/ 里的模板图，代码零改动。",
+         11, False, AMBER, before=4, after=0, line=1.3)
+
+    tf = textbox(s, Inches(0.72), Inches(6.45), Inches(11.9), Inches(0.5))
+    para(tf, "代码、数据、汇报材料一并开源；欢迎 Issue / PR。",
+         12.5, True, BLUE, first=True, after=0)
+    notes(s, "这一页给听众「去哪找代码」。\n"
+             "强调三点：MIT 协议可自由使用；大文件不入库但脚本能再生成；"
+             "换目标只需替换一张模板图。")
+
+    # ---- 16 局限 ----
+    s = page(prs, "Limitation", "局限与下一步", 16, TOTAL)
     left = [
         ("极小目标", "小于 40px 容易漏，需加大上采样尺度"),
         ("单色剪影", "纹理丢失，需额外做一版剪影模板"),
@@ -571,7 +618,7 @@ def build() -> None:
     tf = textbox(s, Inches(1.35), Inches(2.85), Inches(10.5), Inches(1.2))
     para(tf, "谢谢，欢迎提问", 40, True, WHITE, first=True, after=10)
     tf = textbox(s, Inches(1.35), Inches(4.25), Inches(10.5), Inches(1.4))
-    para(tf, "代码：github.com/<your-name>/logo-hunter", 13, False,
+    para(tf, "开源仓库：github.com/ikunchumo/logo-hunter   （MIT License）", 13, False,
          RGBColor(0x9F, 0xB0, 0xC4), first=True, after=6)
     para(tf, "python src/app.py  →  http://127.0.0.1:8770", 12.5, False,
          RGBColor(0x8A, 0xC4, 0xFF), after=0)
